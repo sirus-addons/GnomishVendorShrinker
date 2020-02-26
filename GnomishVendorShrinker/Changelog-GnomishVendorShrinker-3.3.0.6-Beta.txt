@@ -1,0 +1,14 @@
+tag 3.3.0.6-Beta
+c2be40ffc311a21409b8ac2168648e71f9a5d646
+tekkub <tekkub@gmail.com>
+2010-04-25 21:52:58 -0600
+
+Weekly build
+
+
+--------------------
+
+tekkub:
+	- Weekly build 3.3.0.6-Beta
+	- Update changelog for 3.3.0.6-Beta
+	- Better recipe highlighting

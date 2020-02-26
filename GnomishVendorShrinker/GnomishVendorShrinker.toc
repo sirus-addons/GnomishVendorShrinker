@@ -1,0 +1,21 @@
+## Interface: 30300
+## X-Curse-Packaged-Version: 3.3.0.6-Beta
+## X-Curse-Project-Name: GnomishVendorShrinker
+## X-Curse-Project-ID: gnomishvendorshrinker
+## X-Curse-Repository-ID: wow/gnomishvendorshrinker/mainline
+
+## Title: GnomishVendorShrinker
+## Notes: Compact scrolling vendor frame
+## Author: Tekkub Stoutwrithe
+## Version: 3.3.0.6
+## X-Website: http://www.tekkub.net/
+## X-Email: tekkub-wow@googlegroups.com
+## X-Category: Misc
+
+## LoadManagers: AddonLoader
+## X-LoadOn-Merchant: true
+
+tekKonfig\tekKonfig.xml
+
+KnownScanner.lua
+GnomishVendorShrinker.lua

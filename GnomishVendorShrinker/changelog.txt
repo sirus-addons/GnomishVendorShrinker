@@ -1,0 +1,24 @@
+3.3.0.6-Beta
+    Better recipe highlighting
+
+3.3.0.5-Beta
+    Fix refresh "issue"?
+    Oops, I always forget to register all clicks... stupid bad blizzy defaults
+
+3.2.0.4-Beta
+    Increase number of lines in tip scanner
+
+3.2.0.3-Beta
+    Switch to actual honor/arena point itemIDs so we get better tooltips
+    Stupid nils
+    Hide splitstack onhide
+    Fix gold and token items anchoring
+
+3.2.0.2-Beta
+    Add splitstack frame, without the retarded max purchase limits the default vendor frame uses
+    Ensure we always have a default item quality color
+    Fix copper color
+
+3.2.0.1-Beta
+    And so it begins...
+
