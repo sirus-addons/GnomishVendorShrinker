@@ -5,7 +5,7 @@
 ## X-Curse-Repository-ID: wow/gnomishvendorshrinker/mainline
 
 ## Title: GnomishVendorShrinker
-## Notes: Compact scrolling vendor frame
+## Notes: |@Version: 1@|Compact scrolling vendor frame
 ## Author: Tekkub Stoutwrithe
 ## Version: 3.3.0.6
 ## X-Website: http://www.tekkub.net/

@@ -11,11 +11,15 @@ for _,f in pairs{MerchantNextPageButton, MerchantPrevPageButton, MerchantPageTex
 end
 
 
-local GVS = CreateFrame("frame", nil, MerchantFrame)
+local GVS = CreateFrame("frame", "GVSFrame", MerchantFrame)
 GVS:SetWidth(315)
 GVS:SetHeight(294)
-GVS:SetPoint("TOPLEFT", 21, -77)
-GVS:SetScript("OnEvent", function(self, event, ...) if self[event] then return self[event](self, event, ...) end end)
+GVS:SetPoint("TOPLEFT", 10, -66)
+GVS:SetScript("OnEvent", function(self, event, ...)
+	if self[event] then
+		return self[event](self, event, ...)
+	end
+end)
 GVS:Hide()
 
 
@@ -312,54 +316,17 @@ local function Refresh()
 end
 
 
-local editbox = CreateFrame('EditBox', nil, GVS)
+local editbox = CreateFrame('EditBox', nil, GVS, "SearchBoxTemplate")
 editbox:SetAutoFocus(false)
-editbox:SetPoint("TOPLEFT", GVS, "BOTTOMLEFT", 0, -51)
-editbox:SetWidth(160)
+editbox:SetPoint("TOPLEFT", GVS, "BOTTOMLEFT", -2, -51)
+editbox:SetWidth(158)
 editbox:SetHeight(32)
 editbox:SetFontObject('GameFontHighlightSmall')
-
-local left = editbox:CreateTexture(nil, "BACKGROUND")
-left:SetWidth(8) left:SetHeight(20)
-left:SetPoint("LEFT", -5, 0)
-left:SetTexture("Interface\\Common\\Common-Input-Border")
-left:SetTexCoord(0, 0.0625, 0, 0.625)
-
-local right = editbox:CreateTexture(nil, "BACKGROUND")
-right:SetWidth(8) right:SetHeight(20)
-right:SetPoint("RIGHT", 0, 0)
-right:SetTexture("Interface\\Common\\Common-Input-Border")
-right:SetTexCoord(0.9375, 1, 0, 0.625)
-
-local center = editbox:CreateTexture(nil, "BACKGROUND")
-center:SetHeight(20)
-center:SetPoint("RIGHT", right, "LEFT", 0, 0)
-center:SetPoint("LEFT", left, "RIGHT", 0, 0)
-center:SetTexture("Interface\\Common\\Common-Input-Border")
-center:SetTexCoord(0.0625, 0.9375, 0, 0.625)
-
-editbox:SetScript("OnEscapePressed", editbox.ClearFocus)
-editbox:SetScript("OnEnterPressed", editbox.ClearFocus)
-editbox:SetScript("OnEditFocusGained", function(self)
-	if not searchstring then
-		self:SetText("")
-		self:SetTextColor(1,1,1,1)
-	end
-end)
-editbox:SetScript("OnEditFocusLost", function(self)
-	if self:GetText() == "" then
-		self:SetText("Search...")
-		self:SetTextColor(0.75, 0.75, 0.75, 1)
-	end
-end)
 editbox:SetScript("OnTextChanged", function(self)
+	SearchBoxTemplate_OnTextChanged(self)
 	local t = self:GetText()
 	searchstring = t ~= "" and t ~= "Search..." and t:lower() or nil
 	Refresh()
-end)
-editbox:SetScript("OnShow", function(self)
-	self:SetText("Search...")
-	self:SetTextColor(0.75, 0.75, 0.75, 1)
 end)
 
 local scrollbar = LibStub("tekKonfig-Scroll").new(GVS, 0, SCROLLSTEP)
@@ -385,7 +352,7 @@ GVS:SetScript("OnHide", function() if StackSplitFrame:IsVisible() then StackSpli
 
 -- Reanchor the buyback button, it acts weird when switching tabs otherwise...
 MerchantBuyBackItem:ClearAllPoints()
-MerchantBuyBackItem:SetPoint("BOTTOMLEFT", 189, 90)
+MerchantBuyBackItem:SetPoint("BOTTOMLEFT", 176, 33)
 
 
 local function Show()
