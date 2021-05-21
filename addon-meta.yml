@@ -1,4 +1,5 @@
 name: GnomishVendorShrinker
 description: README.md
 version: 1
+category: 17
 directories: ["GnomishVendorShrinker"]
