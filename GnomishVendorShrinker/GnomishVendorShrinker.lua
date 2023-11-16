@@ -227,6 +227,7 @@ for i=1,NUMROWS do
 
 	row:SetScript('OnEnter', function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip.merchantSlotIndex = self:GetID()
 		GameTooltip:SetMerchantItem(self:GetID())
 		GameTooltip_ShowCompareItem()
 		MerchantFrame.itemHover = self:GetID()
@@ -267,6 +268,22 @@ local function Refresh()
 
 			local name, itemTexture, itemPrice, itemStackCount, numAvailable, isUsable, extendedCost = GetMerchantItemInfo(j)
 			local link = GetMerchantItemLink(j)
+			local honorPoints, arenaPoints = GetMerchantItemCostInfo(j)
+			local requirementType, requiredRating = C_Item.GetRequiredPVPRating(itemLink, honorPoints, arenaPoints)
+
+			if requirementType == Enum.ItemRequirementType.None then
+				isUsable = true
+			elseif requirementType == Enum.ItemRequirementType.Battleground then
+				local _, _, _, _, rating = GetRatedBattlegroundRankInfo()
+				if rating >= requiredRating then
+					isUsable = true
+				end
+			elseif requirementType == Enum.ItemRequirementType.Arena then
+				local rating = math.max(GetArenaRating(1), GetArenaRating(2))
+				if rating >= requiredRating then
+					isUsable = true
+				end
+			end
 			local color = quality_colors.default
 			if link then
 				local name, link2, quality, iLevel, reqLevel, class, subclass, maxStack, equipSlot, texture, vendorPrice = GetItemInfo(link)
