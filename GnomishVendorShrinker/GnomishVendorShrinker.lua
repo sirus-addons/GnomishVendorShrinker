@@ -266,25 +266,9 @@ local function Refresh()
 		else
 			row.backdrop:Hide()
 
+			local color = quality_colors.default
 			local name, itemTexture, itemPrice, itemStackCount, numAvailable, isUsable, extendedCost = GetMerchantItemInfo(j)
 			local link = GetMerchantItemLink(j)
-			local honorPoints, arenaPoints = GetMerchantItemCostInfo(j)
-			local requirementType, requiredRating = C_Item.GetRequiredPVPRating(itemLink, honorPoints, arenaPoints)
-
-			if requirementType == Enum.ItemRequirementType.None then
-				isUsable = true
-			elseif requirementType == Enum.ItemRequirementType.Battleground then
-				local _, _, _, _, rating = GetRatedBattlegroundRankInfo()
-				if rating >= requiredRating then
-					isUsable = true
-				end
-			elseif requirementType == Enum.ItemRequirementType.Arena then
-				local rating = math.max(GetArenaRating(1), GetArenaRating(2))
-				if rating >= requiredRating then
-					isUsable = true
-				end
-			end
-			local color = quality_colors.default
 			if link then
 				local name, link2, quality, iLevel, reqLevel, class, subclass, maxStack, equipSlot, texture, vendorPrice = GetItemInfo(link)
 				color = quality_colors[quality]
@@ -292,6 +276,23 @@ local function Refresh()
 				if class == RECIPE and not knowns[link] then
 					row.backdrop:SetGradientAlpha("HORIZONTAL", unpack(grads[quality]))
 					row.backdrop:Show()
+				end
+				
+				local honorPoints, arenaPoints = GetMerchantItemCostInfo(j)
+				local requirementType, requiredRating = C_Item.GetRequiredPVPRating(itemLink, honorPoints, arenaPoints)
+
+				if requirementType == Enum.ItemRequirementType.None then
+					isUsable = true
+				elseif requirementType == Enum.ItemRequirementType.Battleground then
+					local _, _, _, _, rating = GetRatedBattlegroundRankInfo()
+					if rating >= requiredRating then
+						isUsable = true
+					end
+				elseif requirementType == Enum.ItemRequirementType.Arena then
+					local rating = math.max(GetArenaRating(1), GetArenaRating(2))
+					if rating >= requiredRating then
+						isUsable = true
+					end
 				end
 			end
 
