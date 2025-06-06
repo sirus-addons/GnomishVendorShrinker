@@ -279,7 +279,7 @@ local function Refresh()
 				end
 				
 				local honorPoints, arenaPoints = GetMerchantItemCostInfo(j)
-				local requirementType, requiredRating = C_Item.GetRequiredPVPRating(itemLink, honorPoints, arenaPoints)
+				local requirementType, requiredRating = C_Item.GetRequiredPVPRating(link, honorPoints, arenaPoints)
 
 				if requirementType == Enum.ItemRequirementType.None then
 					isUsable = true
