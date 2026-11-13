@@ -67,6 +67,7 @@ local function ShowTooltip(self)
 end
 function lib.OnShow(frame)
 	local notes = GetAddOnMetadata(frame.addonname, "Notes")
+	notes = notes and notes:gsub("|@Version: %d+@|", "")
 
 	local title = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	title:SetPoint("TOPLEFT", 16, -16)
