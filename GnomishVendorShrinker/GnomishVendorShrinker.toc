@@ -5,9 +5,10 @@
 ## X-Curse-Repository-ID: wow/gnomishvendorshrinker/mainline
 
 ## Title: GnomishVendorShrinker
-## Notes: |@Version: 3@|Compact scrolling vendor frame
+## Notes: |@Version: 4@|Compact scrolling vendor frame
 ## Author: Tekkub Stoutwrithe
 ## Version: 3.3.0.6
+## SavedVariables: GnomishVendorShrinkerDB
 ## X-Website: http://www.tekkub.net/
 ## X-Email: tekkub-wow@googlegroups.com
 ## X-Category: Misc

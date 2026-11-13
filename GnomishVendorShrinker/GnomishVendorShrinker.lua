@@ -1,14 +1,7 @@
 
 local NUMROWS, ICONSIZE, GAP, SCROLLSTEP = 14, 17, 4, 5
-local knowns = GVS_SCANNER
 local HONOR_POINTS, ARENA_POINTS = "|cffffffff|Hitem:43308:0:0:0:0:0:0:0:0|h[Honor Points]|h|r", "|cffffffff|Hitem:43307:0:0:0:0:0:0:0:0|h[Arena Points]|h|r"
 GVS_SCANNER = nil
-
-
-for _,f in pairs{MerchantNextPageButton, MerchantPrevPageButton, MerchantPageText} do
-	f:Hide()
-	f.Show = f.Hide
-end
 
 
 local GVS = CreateFrame("frame", "GVSFrame", MerchantFrame)
@@ -23,7 +16,13 @@ end)
 GVS:Hide()
 
 
+local function OnDrop(self)
+	MerchantItemButton_OnClick(self, "LeftButton")
+end
+
+
 local function OnClick(self, button)
+	if CursorHasItem() then return OnDrop(self) end
 	if IsAltKeyDown() and not self.altcurrency then self:BuyItem(true)
 	elseif IsModifiedClick() then HandleModifiedItemClick(GetMerchantItemLink(self:GetID()))
 	elseif self.altcurrency then
@@ -50,12 +49,18 @@ local function PopoutOnClick(self, button)
 end
 
 
-local function Purchase(id, quantity)
+local function Purchase(row, quantity)
+	local id = row:GetID()
 	local _, _, _, vendorStackSize, numAvailable = GetMerchantItemInfo(id)
 	local maxPurchase = GetMerchantItemMaxStack(id)
 	quantity = quantity/vendorStackSize
 
 	if numAvailable > 0 and numAvailable < quantity then quantity = numAvailable end
+	if GnomishVendorShrinkerDB and GnomishVendorShrinkerDB.confirm then
+		local batch = math.min(quantity, maxPurchase)
+		if row.extendedCost then return MerchantFrame_ConfirmExtendedItemCost(row, batch) end
+		if (row.price or 0) * quantity >= MERCHANT_HIGH_PRICE_COST then return MerchantFrame_ConfirmHighCostItem(row, batch) end
+	end
 	local purchased = 0
 	while purchased < quantity do
 		local buyamount = math.min(maxPurchase, quantity - purchased)
@@ -71,12 +76,12 @@ local function BuyItem(self, fullstack)
 	if not link then return end
 
 	local _, _, _, _, _, _, _, stack = GetItemInfo(link)
-	Purchase(id, fullstack and stack or 1)
+	Purchase(self, fullstack and stack or 1)
 end
 
 
 local function PopoutSplitStack(self, qty)
-	Purchase(self:GetParent():GetID(), qty)
+	Purchase(self:GetParent(), qty)
 end
 
 
@@ -155,12 +160,12 @@ local function AddAltCurrency(frame, i)
 	end
 	if arenaPoints > 0 then
 		local f = frame:GetAltCurrencyFrame()
-		f:SetValue(arenaPoints, "Interface\\PVPFrame\\PVP-ArenaPoints-Icon", ARENA_POINTS)
+		f:SetValue(arenaPoints, "Interface\\PVPFrame\\PVPCurrency-Conquest1-".. UnitFactionGroup("player"), ARENA_POINTS)
 		lastframe = f.text
 	end
 	if honorPoints > 0 then
 		local f = frame:GetAltCurrencyFrame()
-		f:SetValue(honorPoints, "Interface\\PVPFrame\\PVP-Currency-".. UnitFactionGroup("player"), HONOR_POINTS)
+		f:SetValue(honorPoints, "Interface\\PVPFrame\\PVPCurrency-Honor1-".. UnitFactionGroup("player"), HONOR_POINTS)
 		lastframe = f.text
 	end
 	frame.ItemName:SetPoint("RIGHT", lastframe, "LEFT", -GAP, 0)
@@ -183,6 +188,7 @@ for i=1,NUMROWS do
 
 	row:RegisterForClicks("AnyUp")
 	row:SetScript('OnClick', OnClick)
+	row:SetScript('OnReceiveDrag', OnDrop)
 	row:SetScript('OnDragStart', function(self, button)
 		MerchantFrame.extendedCost = nil
 		PickupMerchantItem(self:GetID())
@@ -252,11 +258,10 @@ local grads = setmetatable({
 	[4] = {1,0,1,0.75, 1,0,1,0}, -- purple
 	[7] = {1,.75,.5,0.75, 1,.75,.5,0}, -- heirloom
 }, {__index = function(t,i) t[i] = default_grad return default_grad end})
-local _, _, _, _, _, _, _, _, RECIPE = GetAuctionItemClasses()
+local RECIPE = LE_ITEM_CLASS_RECIPE or 9
 local quality_colors = setmetatable({}, {__index = function() return "|cffffffff" end})
 for i=1,7 do quality_colors[i] = select(4, GetItemQualityColor(i)) end
 local offset = 0
-local searchstring
 local function Refresh()
 	local n = GetMerchantNumItems()
 	for i,row in pairs(rows) do
@@ -268,60 +273,63 @@ local function Refresh()
 
 			local color = quality_colors.default
 			local name, itemTexture, itemPrice, itemStackCount, numAvailable, isUsable, extendedCost = GetMerchantItemInfo(j)
+			local canUseItem, canPurchase, isAlreadyKnown = GetMerchantItemInfoEx(j)
 			local link = GetMerchantItemLink(j)
+			if not link then
+				local itemID = GetMerchantItemID(j)
+				if itemID then link = C_Item.GetItemLinkCache(itemID) end
+			end
 			if link then
 				local name, link2, quality, iLevel, reqLevel, class, subclass, maxStack, equipSlot, texture, vendorPrice = GetItemInfo(link)
 				color = quality_colors[quality]
 
-				if class == RECIPE and not knowns[link] then
-					row.backdrop:SetGradientAlpha("HORIZONTAL", unpack(grads[quality]))
+				if select(6, GetItemInfoInstant(link)) == RECIPE and not isAlreadyKnown then
+					row.backdrop:SetGradientAlpha("HORIZONTAL", unpack(grads[quality or 1]))
 					row.backdrop:Show()
 				end
 				
 				local honorPoints, arenaPoints = GetMerchantItemCostInfo(j)
 				local requirementType, requiredRating = C_Item.GetRequiredPVPRating(link, honorPoints, arenaPoints)
 
-				if requirementType == Enum.ItemRequirementType.None then
-					isUsable = true
+				if requirementType == Enum.ItemRequirementType.Removed then
+					canPurchase = true
 				elseif requirementType == Enum.ItemRequirementType.Battleground then
-					local _, _, _, _, rating = GetRatedBattlegroundRankInfo()
-					if rating >= requiredRating then
-						isUsable = true
+					if C_PvP.GetRatedBattlegroundRating() >= requiredRating then
+						canPurchase = true
 					end
 				elseif requirementType == Enum.ItemRequirementType.Arena then
 					local rating = math.max(GetArenaRating(1), GetArenaRating(2))
 					if rating >= requiredRating then
-						isUsable = true
+						canPurchase = true
 					end
 				end
 			end
 
+			isUsable = canUseItem and canPurchase
 			if not isUsable then
 				row.backdrop:SetGradientAlpha("HORIZONTAL", unpack(grads.red))
 				row.backdrop:Show()
 			end
-
-			row:SetAlpha(searchstring and name and not name:lower():match(searchstring) and 0.5 or 1)
 
 			row.icon:SetTexture(itemTexture)
 			row.ItemName:SetText((numAvailable > -1 and ("["..numAvailable.."] ") or "").. color.. (name or "<Loading item data>").. (itemStackCount > 1 and ("|r x"..itemStackCount) or ""))
 
 			for i,v in pairs(row.altframes) do v:Hide() end
 			row.altcurrency = extendedCost
+			row.link, row.texture = link, itemTexture
 			if extendedCost then
 				row:AddAltCurrency(j)
-				row.link, row.texture, row.extendedCost = link, itemTexture, true
+				row.extendedCost = true
 			end
+			row.count = itemStackCount
 			if itemPrice > 0 then
 				row.ItemPrice:SetText(GSC(itemPrice))
-				row.Price = itemPrice
-			end
-			if extendedCost and (itemPrice <= 0) then
-				row.ItemPrice:SetText()
-				row.Price = 0
-			elseif extendedCost and (itemPrice > 0) then
-				row.ItemPrice:SetText(GSC(itemPrice))
+				row.price = itemPrice
 			else
+				row.ItemPrice:SetText()
+				row.price = nil
+			end
+			if not extendedCost then
 				row.ItemName:SetPoint("RIGHT", row.ItemPrice, "LEFT", -GAP, 0)
 				row.extendedCost = nil
 			end
@@ -333,19 +341,6 @@ local function Refresh()
 	end
 end
 
-
-local editbox = CreateFrame('EditBox', nil, GVS, "SearchBoxTemplate")
-editbox:SetAutoFocus(false)
-editbox:SetPoint("TOPLEFT", GVS, "BOTTOMLEFT", -2, -51)
-editbox:SetWidth(158)
-editbox:SetHeight(32)
-editbox:SetFontObject('GameFontHighlightSmall')
-editbox:SetScript("OnTextChanged", function(self)
-	SearchBoxTemplate_OnTextChanged(self)
-	local t = self:GetText()
-	searchstring = t ~= "" and t ~= "Search..." and t:lower() or nil
-	Refresh()
-end)
 
 local scrollbar = LibStub("tekKonfig-Scroll").new(GVS, 0, SCROLLSTEP)
 local f = scrollbar:GetScript("OnValueChanged")
@@ -375,6 +370,9 @@ MerchantBuyBackItem:SetPoint("BOTTOMLEFT", 176, 33)
 
 local function Show()
 	for i=1,12 do _G["MerchantItem"..i]:Hide() end
+	MerchantPageText:Hide()
+	MerchantPrevPageButton:Hide()
+	MerchantNextPageButton:Hide()
 	if GVS:IsShown() then GVS:GetScript("OnShow")(GVS, true) else GVS:Show() end
 end
 hooksecurefunc("MerchantFrame_UpdateMerchantInfo", Show)
@@ -389,4 +387,13 @@ end)
 if MerchantFrame:IsVisible() and MerchantFrame.selectedTab == 1 then Show() end
 
 
-LibStub("tekKonfig-AboutPanel").new(nil, "GnomishVendorShrinker")
+local panel = LibStub("tekKonfig-AboutPanel").new(nil, "GnomishVendorShrinker")
+
+local check = CreateFrame("CheckButton", "GVSConfirmCheck", panel, "InterfaceOptionsCheckButtonTemplate")
+check:SetPoint("TOPLEFT", 16, -200)
+check.Text:SetText(GetLocale() == "ruRU" and "Подтверждать покупки от 150 золотых и покупки за жетоны" or "Confirm purchases of 150 gold or more and purchases for tokens")
+check:SetScript("OnShow", function(self) self:SetChecked(GnomishVendorShrinkerDB and GnomishVendorShrinkerDB.confirm) end)
+check:HookScript("OnClick", function(self)
+	GnomishVendorShrinkerDB = GnomishVendorShrinkerDB or {}
+	GnomishVendorShrinkerDB.confirm = self:GetChecked() and true or nil
+end)
